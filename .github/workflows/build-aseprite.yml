@@ -1,0 +1,35 @@
+name: build-auto
+on:
+  push:
+    paths:
+    - '.github/workflows/build-auto.yml'
+    - 'build.cmd'
+    - 'build.ps1'
+    - 'build.sh'
+    - 'laf'
+jobs:
+  build-auto:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [RelWithDebInfo, Debug]
+    steps:
+    - uses: actions/checkout@v7
+      with:
+        submodules: 'recursive'
+    - uses: aseprite/get-ninja@main
+    - uses: TheMrMilchmann/setup-msvc-dev@v4
+      with:
+        arch: x64
+    - name: Building
+      shell: bash
+      run: |
+        bash build.sh --auto --norun
+    - name: Running CLI Tests
+      shell: bash
+      run: |
+        export ASEPRITE=$PWD/build/bin/aseprite
+        cd tests
+        bash run-tests.sh
