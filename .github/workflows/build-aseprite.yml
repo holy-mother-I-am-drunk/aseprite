@@ -1,35 +1,50 @@
-name: build-auto
+name: build-aseprite
+
 on:
   push:
     paths:
-    - '.github/workflows/build-auto.yml'
-    - 'build.cmd'
-    - 'build.ps1'
-    - 'build.sh'
-    - 'laf'
+      - '.github/workflows/build-aseprite.yml'
+      - 'build.cmd'
+      - 'build.ps1'
+      - 'build.sh'
+      - 'laf'
+  workflow_dispatch:
+
 jobs:
-  build-auto:
+  build-aseprite:
     runs-on: windows-latest
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
         build_type: [RelWithDebInfo, Debug]
+
     steps:
-    - uses: actions/checkout@v7
-      with:
-        submodules: 'recursive'
-    - uses: aseprite/get-ninja@main
-    - uses: TheMrMilchmann/setup-msvc-dev@v4
-      with:
-        arch: x64
-    - name: Building
-      shell: bash
-      run: |
-        bash build.sh --auto --norun
-    - name: Running CLI Tests
-      shell: bash
-      run: |
-        export ASEPRITE=$PWD/build/bin/aseprite
-        cd tests
-        bash run-tests.sh
+      - uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+
+      - uses: aseprite/get-ninja@main
+
+      - uses: TheMrMilchmann/setup-msvc-dev@v4
+        with:
+          arch: x64
+
+      - name: Building
+        shell: bash
+        run: |
+          bash build.sh --auto --norun
+
+      - name: Running CLI Tests
+        shell: bash
+        run: |
+          export ASEPRITE=$PWD/build/bin/aseprite
+          cd tests
+          bash run-tests.sh
+
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: Aseprite-Windows-${{ matrix.build_type }}
+          path: build/bin/*
